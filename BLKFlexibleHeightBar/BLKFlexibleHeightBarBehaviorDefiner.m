@@ -137,7 +137,7 @@
                 }
 
             }];
-        } else {
+        } else if (self.flexibleHeightBar.progress != 0) {
             // don't let the nav bar become collapsed when there's not enough room to scroll its content on that state
             snapPosition = 0;
         }
