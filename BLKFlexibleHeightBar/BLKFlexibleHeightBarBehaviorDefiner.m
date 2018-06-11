@@ -91,15 +91,28 @@
 
 - (void)snapToProgress:(CGFloat)progress scrollView:(UIScrollView *)scrollView
 {
-    CGFloat deltaProgress = progress - self.flexibleHeightBar.progress;
-    CGFloat deltaYOffset = (self.flexibleHeightBar.maximumBarHeight-self.flexibleHeightBar.minimumBarHeight) * deltaProgress;
-    scrollView.contentOffset = CGPointMake(scrollView.contentOffset.x, scrollView.contentOffset.y+deltaYOffset);
+    CGFloat yOffset;
+    if (![self hasEnoughScrollableSpaceForBarWithMinimumHeight:scrollView]) {
+        yOffset = -scrollView.contentInset.top;
+    } else {
+        CGFloat deltaProgress = progress - self.flexibleHeightBar.progress;
+        CGFloat deltaYOffset = (self.flexibleHeightBar.maximumBarHeight-self.flexibleHeightBar.minimumBarHeight) * deltaProgress;
+        yOffset = scrollView.contentOffset.y+deltaYOffset;
+    }
+
+    scrollView.contentOffset = CGPointMake(scrollView.contentOffset.x, yOffset);
     
     self.flexibleHeightBar.progress = progress;
     [self.flexibleHeightBar setNeedsLayout];
     [self.flexibleHeightBar layoutIfNeeded];
     
     self.currentlySnapping = NO;
+}
+
+- (BOOL)hasEnoughScrollableSpaceForBarWithMinimumHeight:(UIScrollView *)scrollView
+{
+    CGFloat scrollViewViewportHeight = scrollView.frame.size.height - scrollView.contentInset.bottom - (scrollView.contentInset.top - (self.flexibleHeightBar.maximumBarHeight - self.flexibleHeightBar.minimumBarHeight));
+    return scrollView.contentSize.height >= scrollViewViewportHeight;
 }
 
 - (void)snapWithScrollView:(UIScrollView *)scrollView
@@ -109,21 +122,26 @@
         self.currentlySnapping = YES;
         
         __block CGFloat snapPosition = MAXFLOAT;
-        [self.snappingPositionsForProgressRanges enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL *stop) {
-            
-            NSValue *existingRangeValue = key;
-            NSRange existingRange = [existingRangeValue rangeValue];
-            
-            CGFloat progressPercent = self.flexibleHeightBar.progress * 100.0;
-            
-            if(progressPercent >= existingRange.location && (progressPercent <= (existingRange.location+existingRange.length)))
-            {
-                NSNumber *existingProgressValue = obj;
-                snapPosition = [existingProgressValue doubleValue];
-            }
-            
-        }];
-        
+        if ([self hasEnoughScrollableSpaceForBarWithMinimumHeight:scrollView]) {
+            [self.snappingPositionsForProgressRanges enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL *stop) {
+
+                NSValue *existingRangeValue = key;
+                NSRange existingRange = [existingRangeValue rangeValue];
+
+                CGFloat progressPercent = self.flexibleHeightBar.progress * 100.0;
+
+                if(progressPercent >= existingRange.location && (progressPercent <= (existingRange.location+existingRange.length)))
+                {
+                    NSNumber *existingProgressValue = obj;
+                    snapPosition = [existingProgressValue doubleValue];
+                }
+
+            }];
+        } else {
+            // don't let the nav bar become collapsed when there's not enough room to scroll its content on that state
+            snapPosition = 0;
+        }
+
         if(snapPosition != MAXFLOAT)
         {
             [UIView animateWithDuration:0.15 animations:^{
@@ -161,7 +179,9 @@
 
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView
 {
-    scrollView.scrollIndicatorInsets =  UIEdgeInsetsMake(CGRectGetHeight(self.flexibleHeightBar.bounds), scrollView.scrollIndicatorInsets.left, scrollView.scrollIndicatorInsets.bottom, scrollView.scrollIndicatorInsets.right);
+    CGFloat scrollViewOffsetY = [self.flexibleHeightBar.superview convertRect:scrollView.frame fromView:scrollView.superview].origin.y;
+    CGFloat scrollTopInset = CGRectGetHeight(self.flexibleHeightBar.bounds) - scrollViewOffsetY;
+    scrollView.scrollIndicatorInsets =  UIEdgeInsetsMake(scrollTopInset, scrollView.scrollIndicatorInsets.left, scrollView.scrollIndicatorInsets.bottom, scrollView.scrollIndicatorInsets.right);
 }
 
 @end

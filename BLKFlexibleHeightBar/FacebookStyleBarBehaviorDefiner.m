@@ -92,7 +92,7 @@
 
 - (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView
 {
-    CGFloat scrollViewViewportHeight = CGRectGetMaxY(scrollView.bounds) - CGRectGetMinY(scrollView.bounds);
+    CGFloat scrollViewViewportHeight = scrollView.frame.size.height - scrollView.contentInset.bottom - (scrollView.contentInset.top - (self.flexibleHeightBar.maximumBarHeight - self.flexibleHeightBar.minimumBarHeight));
     
     if((scrollView.contentOffset.y+scrollView.contentInset.top) >= 0.0 && scrollView.contentOffset.y <= (scrollView.contentSize.height-scrollViewViewportHeight))
     {
@@ -153,7 +153,7 @@
 {
     [super scrollViewDidScroll:scrollView];
     
-    if(!self.isCurrentlySnapping)
+    if(!self.isCurrentlySnapping && [self hasEnoughScrollableSpaceForBarWithMinimumHeight:scrollView])
     {
         CGFloat deltaYOffset = scrollView.contentOffset.y - self.previousYOffset;
         CGFloat deltaProgress = deltaYOffset / (self.flexibleHeightBar.maximumBarHeight-self.flexibleHeightBar.minimumBarHeight);

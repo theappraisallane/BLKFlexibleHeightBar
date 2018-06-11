@@ -71,6 +71,13 @@
 - (void)snapToProgress:(CGFloat)progress scrollView:(UIScrollView *)scrollView;
 
 /**
+ For the given scroll view, calculates whether it would have enough space to scroll when the nav bar is collapsed.
+ @param scrollView the scroll view
+ @return whether it would have enough space to scroll when the nav bar is collapsed
+ */
+- (BOOL)hasEnoughScrollableSpaceForBarWithMinimumHeight:(UIScrollView *)scrollView;
+
+/**
  Snap to the appropriate progress position based on the bar's current progress and the currently defined snapping position progresses.
  @param The UIScrollView whose offset will be adjusted during the snap.
  */
