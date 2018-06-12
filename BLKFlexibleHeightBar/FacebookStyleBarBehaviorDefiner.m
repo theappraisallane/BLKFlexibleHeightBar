@@ -92,7 +92,11 @@
 
 - (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView
 {
-    CGFloat scrollViewViewportHeight = scrollView.frame.size.height - scrollView.contentInset.bottom - (scrollView.contentInset.top - (self.flexibleHeightBar.maximumBarHeight - self.flexibleHeightBar.minimumBarHeight));
+    CGFloat bottomInset = scrollView.contentInset.bottom;
+    if (@available(iOS 11.0, *)) {
+        bottomInset = scrollView.adjustedContentInset.bottom;
+    }
+    CGFloat scrollViewViewportHeight = scrollView.frame.size.height - bottomInset - (scrollView.contentInset.top - (self.flexibleHeightBar.maximumBarHeight - self.flexibleHeightBar.minimumBarHeight));
     
     if((scrollView.contentOffset.y+scrollView.contentInset.top) >= 0.0 && scrollView.contentOffset.y <= (scrollView.contentSize.height-scrollViewViewportHeight))
     {

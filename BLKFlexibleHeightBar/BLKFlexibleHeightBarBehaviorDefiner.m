@@ -93,7 +93,13 @@
 {
     CGFloat yOffset;
     if (![self hasEnoughScrollableSpaceForBarWithMinimumHeight:scrollView]) {
-        yOffset = -scrollView.contentInset.top;
+        CGFloat minContentOffset = -scrollView.contentInset.top;
+        CGFloat bottomInset = scrollView.contentInset.bottom;
+        if (@available(iOS 11.0, *)) {
+            bottomInset = scrollView.adjustedContentInset.bottom;
+        }
+        CGFloat maxContentOffset = MAX(scrollView.contentSize.height - (scrollView.frame.size.height - bottomInset), minContentOffset);
+        yOffset = MIN(MAX(minContentOffset, scrollView.contentOffset.y), maxContentOffset);
     } else {
         CGFloat deltaProgress = progress - self.flexibleHeightBar.progress;
         CGFloat deltaYOffset = (self.flexibleHeightBar.maximumBarHeight-self.flexibleHeightBar.minimumBarHeight) * deltaProgress;
@@ -111,7 +117,11 @@
 
 - (BOOL)hasEnoughScrollableSpaceForBarWithMinimumHeight:(UIScrollView *)scrollView
 {
-    CGFloat scrollViewViewportHeight = scrollView.frame.size.height - scrollView.contentInset.bottom - (scrollView.contentInset.top - (self.flexibleHeightBar.maximumBarHeight - self.flexibleHeightBar.minimumBarHeight));
+    CGFloat bottomInset = scrollView.contentInset.bottom;
+    if (@available(iOS 11.0, *)) {
+        bottomInset = scrollView.adjustedContentInset.bottom;
+    }
+    CGFloat scrollViewViewportHeight = scrollView.frame.size.height - bottomInset - (scrollView.contentInset.top - (self.flexibleHeightBar.maximumBarHeight - self.flexibleHeightBar.minimumBarHeight));
     return scrollView.contentSize.height >= scrollViewViewportHeight;
 }
 
